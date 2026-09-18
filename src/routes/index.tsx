@@ -3,7 +3,6 @@ import { useServerFn } from "@tanstack/react-start";
 import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
-
 import { sendPing, type PingResult } from "@/lib/ping.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,14 +14,12 @@ export const Route = createFileRoute("/")({
       { title: "Get DID" },
       {
         name: "description",
-        content:
-          "Enter phone, city, state & zip to receive Bid, Buffer and DID",
+        content: "Enter phone, state & zip to receive Bid, Buffer and DID",
       },
       { property: "og:title", content: "Get DID" },
       {
         property: "og:description",
-        content:
-          "Enter phone, city, state & zip to receive Bid, Buffer and DID",
+        content: "Enter phone, state & zip to receive Bid, Buffer and DID",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -37,11 +34,11 @@ const US_STATES = [
   "SD","TN","TX","UT","VT","VA","WA","WV","WI","WY","DC",
 ];
 
-type Errors = Partial<Record<"phone" | "state" | "zip" | "city", string>>;
+type Errors = Partial<Record<"phone" | "state" | "zip", string>>;
 
 function PingPage() {
   const ping = useServerFn(sendPing);
-  const [form, setForm] = useState({ phone: "", state: "", zip: "", city: "" });
+  const [form, setForm] = useState({ phone: "", state: "", zip: "" });
   const [errors, setErrors] = useState<Errors>({});
   const [result, setResult] = useState<PingResult | null>(null);
 
@@ -71,7 +68,6 @@ function PingPage() {
     if (digits.length !== 10 && digits.length !== 11) next.phone = "Enter a valid 10-digit phone number";
     if (!/^[A-Za-z]{2}$/.test(form.state.trim())) next.state = "Use a 2-letter state code";
     if (!/^\d{5}$/.test(form.zip.trim())) next.zip = "Enter a 5-digit ZIP code";
-    if (!form.city.trim()) next.city = "City is required";
     setErrors(next);
     return Object.keys(next).length === 0;
   };
@@ -87,13 +83,13 @@ function PingPage() {
     <main className="flex min-h-screen items-center justify-center bg-[#f7f8fa] px-4 py-6">
       <div className="w-full max-w-[420px]">
         <div className="rounded-[10px] border border-[#e3e6ea] bg-white p-7 shadow-[0_1px_3px_rgba(16,24,40,0.06),0_4px_16px_rgba(16,24,40,0.06)] sm:p-8">
-          {/* Header – matches old form */}
+          {/* Header */}
           <header className="mb-7">
             <h1 className="text-2xl font-bold tracking-tight text-[#1a1d23]">
               Get DID
             </h1>
             <p className="mt-1.5 text-[14.5px] leading-snug text-[#6b7280]">
-              Enter phone, city, state & zip to receive Bid, Buffer and DID
+              Enter phone, state & zip to receive Bid, Buffer and DID
             </p>
           </header>
 
@@ -117,26 +113,6 @@ function PingPage() {
               />
               {errors.phone && (
                 <p className="min-h-4 text-[12.5px] text-[#dc2626]">{errors.phone}</p>
-              )}
-            </div>
-
-            {/* City */}
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="city" className="text-[13.5px] font-semibold text-[#1a1d23]">
-                City <span className="text-[#dc2626]">*</span>
-              </Label>
-              <Input
-                id="city"
-                placeholder="San Francisco"
-                maxLength={100}
-                value={form.city}
-                onChange={(e) => update("city")(e.target.value)}
-                className={`h-11 rounded-lg border-[#e3e6ea] text-[15px] focus-visible:border-[#2563eb] focus-visible:ring-[#2563eb]/20 ${
-                  errors.city ? "border-[#dc2626]" : ""
-                }`}
-              />
-              {errors.city && (
-                <p className="min-h-4 text-[12.5px] text-[#dc2626]">{errors.city}</p>
               )}
             </div>
 
@@ -188,7 +164,7 @@ function PingPage() {
               </div>
             </div>
 
-            {/* Submit button – matches old blue style */}
+            {/* Submit button */}
             <Button
               type="submit"
               disabled={mutation.isPending}
@@ -218,7 +194,7 @@ function PingPage() {
             </p>
           )}
 
-          {/* Results box – same layout as old form */}
+          {/* Results box */}
           {result?.ok && (
             <div className="mt-3 flex flex-col gap-2 rounded-lg border border-[#bae6fd] bg-[#f0f9ff] p-4">
               <div className="text-[15px]">
@@ -236,7 +212,7 @@ function PingPage() {
             </div>
           )}
 
-          {/* Raw response (when not ok) */}
+          {/* Raw response */}
           {result && !result.ok && result.raw && (
             <pre className="mt-3 max-h-48 overflow-auto rounded-lg border border-[#e2e8f0] bg-[#f8fafc] p-3.5 font-mono text-[13px] text-[#334155] whitespace-pre-wrap break-all">
               {result.raw}
