@@ -5,8 +5,9 @@ const PING_URL = "https://track.edmleadnetwork.com/call-preping.do";
 const CAMPAIGN_ID = "6aa835da3fc9a";
 const CAMPAIGN_KEY = "gcYBjGnzt4LMqXQwPdFf";
 
-// ← Paste the Web App URL you just created
-const LOG_URL = "https://script.google.com/macros/s/AKfycbz8rXnY50yFqHa4_x_nYEa9YVcs_CiaCPL1munRPaeOIfAU9ZMZCoco7oIA7-6YFBAjCg/exec";
+// Your Logger Web App URL
+const LOG_URL =
+  "https://script.google.com/macros/s/AKfycbz8rXnY50yFqHa4_x_nYEa9YVcs_CiaCPL1munRPaeOIfAU9ZMZCoco7oIA7-6YFBAjCg/exec";
 
 const pingSchema = z.object({
   phone: z
@@ -25,11 +26,6 @@ const pingSchema = z.object({
     .string()
     .trim()
     .regex(/^\d{5}$/, { message: "Enter a 5-digit ZIP code" }),
-  city: z
-    .string()
-    .trim()
-    .min(1, { message: "City is required" })
-    .max(100, { message: "City must be under 100 characters" }),
 });
 
 export type PingInput = z.input<typeof pingSchema>;
@@ -47,7 +43,11 @@ export type PingResult = {
 function pick(source: Record<string, unknown>, keys: string[]): string | null {
   for (const key of keys) {
     for (const [k, v] of Object.entries(source)) {
-      if (k.toLowerCase().replace(/[^a-z]/g, "") === key && v !== null && v !== "") {
+      if (
+        k.toLowerCase().replace(/[^a-z]/g, "") === key &&
+        v !== null &&
+        v !== ""
+      ) {
         return String(v);
       }
     }
@@ -55,7 +55,10 @@ function pick(source: Record<string, unknown>, keys: string[]): string | null {
   return null;
 }
 
-function flatten(value: unknown, out: Record<string, unknown> = {}): Record<string, unknown> {
+function flatten(
+  value: unknown,
+  out: Record<string, unknown> = {}
+): Record<string, unknown> {
   if (value && typeof value === "object") {
     for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
       if (v && typeof v === "object") flatten(v, out);
@@ -67,7 +70,8 @@ function flatten(value: unknown, out: Record<string, unknown> = {}): Record<stri
 
 function parseXml(text: string): Record<string, unknown> {
   const out: Record<string, unknown> = {};
-  const re = /<([A-Za-z0-9_:-]+)>(?:<!\[CDATA\[)?([\s\S]*?)(?:\]\]>)?<\/\1>/g;
+  const re =
+    /<([A-Za-z0-9_:-]+)>(?:<!\[CDATA\[)?([\s\S]*?)(?:\]\]>)?<\/\1>/g;
   let m: RegExpExecArray | null;
   while ((m = re.exec(text))) {
     const inner = m[2] ?? "";
@@ -89,7 +93,7 @@ async function logToSheet(payload: Record<string, unknown>) {
 }
 
 export const sendPing = createServerFn({ method: "POST" })
-  .validator((input: PingInput) => pingSchema.parse(input))   // ← fixed deprecation
+  .validator((input: PingInput) => pingSchema.parse(input))
   .handler(async ({ data }): Promise<PingResult> => {
     const body = new URLSearchParams({
       lp_campaign_id: CAMPAIGN_ID,
@@ -98,7 +102,6 @@ export const sendPing = createServerFn({ method: "POST" })
       phone_home: data.phone,
       state: data.state,
       zip_code: data.zip,
-      city: data.city,
     });
 
     let text = "";
@@ -125,10 +128,8 @@ export const sendPing = createServerFn({ method: "POST" })
         raw: "",
       };
 
-      // Still log the failed attempt
       await logToSheet({
         phone: data.phone,
-        city: data.city,
         state: data.state,
         zip: data.zip,
         ...failResult,
@@ -152,7 +153,12 @@ export const sendPing = createServerFn({ method: "POST" })
       "callcenternumber",
       "transfernumber",
     ]);
-    const buffer = pick(flat, ["buffer", "duration", "buffertime", "bufferseconds"]);
+    const buffer = pick(flat, [
+      "buffer",
+      "duration",
+      "buffertime",
+      "bufferseconds",
+    ]);
     const payout = pick(flat, ["payout", "price", "bidamount", "amount"]);
     const leadId = pick(flat, ["pingid", "leadid", "id"]);
     const message = pick(flat, ["message", "errors", "error", "msg"]);
@@ -170,14 +176,14 @@ export const sendPing = createServerFn({ method: "POST" })
       buffer,
       payout,
       leadId,
-      message: message ?? (ok ? null : "No matching buyer returned for this lead."),
+      message:
+        message ?? (ok ? null : "No matching buyer returned for this lead."),
       raw: text.slice(0, 4000),
     };
 
-    // Save every response to the Google Sheet
+    // Log every response to Google Sheet
     await logToSheet({
       phone: data.phone,
-      city: data.city,
       state: data.state,
       zip: data.zip,
       ...result,
